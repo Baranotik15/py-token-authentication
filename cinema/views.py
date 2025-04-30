@@ -1,12 +1,11 @@
 from datetime import datetime
 
 from django.db.models import F, Count
-from rest_framework import viewsets, status
-from rest_framework.authentication import TokenAuthentication
+from rest_framework import viewsets
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
 
+from cinema.viewsets import ListAndCreateViewSet, ListCreateAndRetrieveViewSet
 from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order
 
 from cinema.serializers import (
@@ -25,85 +24,34 @@ from cinema.serializers import (
 from user.permissions import IsAdminOrIfAuthenticatedReadOnly
 
 
-class GenreViewSet(viewsets.ModelViewSet):
+
+class GenreViewSet(ListAndCreateViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
-    authentication_classes = (TokenAuthentication,)
     permission_classes = (IsAdminOrIfAuthenticatedReadOnly,)
 
-    def destroy(self, request, *args, **kwargs):
-        return Response(status=status.HTTP_404_NOT_FOUND)
 
-    def retrieve(self, request, *args, **kwargs):
-        return Response(status=status.HTTP_404_NOT_FOUND)
-
-    def update(self, request, *args, **kwargs):
-        return Response(status=status.HTTP_404_NOT_FOUND)
-
-    def partial_update(self, request, *args, **kwargs):
-        return Response(status=status.HTTP_404_NOT_FOUND)
-
-
-class ActorViewSet(viewsets.ModelViewSet):
+class ActorViewSet(ListAndCreateViewSet):
     queryset = Actor.objects.all()
     serializer_class = ActorSerializer
-    authentication_classes = (TokenAuthentication,)
     permission_classes = (IsAdminOrIfAuthenticatedReadOnly,)
 
-    def destroy(self, request, *args, **kwargs):
-        return Response(status=status.HTTP_404_NOT_FOUND)
 
-    def retrieve(self, request, *args, **kwargs):
-        return Response(status=status.HTTP_404_NOT_FOUND)
-
-    def update(self, request, *args, **kwargs):
-        return Response(status=status.HTTP_404_NOT_FOUND)
-
-    def partial_update(self, request, *args, **kwargs):
-        return Response(status=status.HTTP_404_NOT_FOUND)
-
-
-class CinemaHallViewSet(viewsets.ModelViewSet):
+class CinemaHallViewSet(ListAndCreateViewSet):
     queryset = CinemaHall.objects.all()
     serializer_class = CinemaHallSerializer
-    authentication_classes = (TokenAuthentication,)
     permission_classes = (IsAdminOrIfAuthenticatedReadOnly,)
 
-    def destroy(self, request, *args, **kwargs):
-        return Response(status=status.HTTP_404_NOT_FOUND)
 
-    def retrieve(self, request, *args, **kwargs):
-        return Response(status=status.HTTP_404_NOT_FOUND)
-
-    def update(self, request, *args, **kwargs):
-        return Response(status=status.HTTP_404_NOT_FOUND)
-
-    def partial_update(self, request, *args, **kwargs):
-        return Response(status=status.HTTP_404_NOT_FOUND)
-
-
-class MovieViewSet(viewsets.ModelViewSet):
+class MovieViewSet(ListCreateAndRetrieveViewSet):
     queryset = Movie.objects.prefetch_related("genres", "actors")
     serializer_class = MovieSerializer
-    authentication_classes = (TokenAuthentication,)
     permission_classes = (IsAdminOrIfAuthenticatedReadOnly,)
 
     @staticmethod
     def _params_to_ints(qs):
         """Converts a list of string IDs to a list of integers"""
         return [int(str_id) for str_id in qs.split(",")]
-
-    def destroy(self, request, *args, **kwargs):
-        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
-
-    def retrieve(self, request, *args, **kwargs):
-        return super().retrieve(request, *args, **kwargs)
-
-    def update(self, request, *args, **kwargs):
-        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
-
-    def partial_update(self, request, *args, **kwargs):
-        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
     def get_queryset(self):
         """Retrieve the movies with filters"""
@@ -147,11 +95,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         )
     )
     serializer_class = MovieSessionSerializer
-    authentication_classes = (TokenAuthentication,)
     permission_classes = (IsAdminOrIfAuthenticatedReadOnly,)
-
-    def destroy(self, request, *args, **kwargs):
-        return Response(status=status.HTTP_204_NO_CONTENT)
 
     def get_queryset(self):
         date = self.request.query_params.get("date")
@@ -183,13 +127,12 @@ class OrderPagination(PageNumberPagination):
     max_page_size = 100
 
 
-class OrderViewSet(viewsets.ModelViewSet):
+class OrderViewSet(ListAndCreateViewSet):
     queryset = Order.objects.prefetch_related(
         "tickets__movie_session__movie", "tickets__movie_session__cinema_hall"
     )
     serializer_class = OrderSerializer
     pagination_class = OrderPagination
-    authentication_classes = (TokenAuthentication,)
     permission_classes = (IsAuthenticated,)
 
     def get_queryset(self):
@@ -203,12 +146,3 @@ class OrderViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
-
-    def retrieve(self, request, *args, **kwargs):
-        return Response(status=status.HTTP_404_NOT_FOUND)
-
-    def update(self, request, *args, **kwargs):
-        return Response(status=status.HTTP_404_NOT_FOUND)
-
-    def destroy(self, request, *args, **kwargs):
-        return Response(status=status.HTTP_404_NOT_FOUND)
